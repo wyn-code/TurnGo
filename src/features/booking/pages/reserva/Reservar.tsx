@@ -24,8 +24,6 @@ import { clientService } from "@/services/cliente.service";
 
 import { cn } from "@/lib/utils";
 
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import BookingStepper from "@/features/booking/components/BookingStepper";
 import BookingForm from "@/features/booking/components/BookingForm";
 import BookingSummary from "@/features/booking/components/BookingSummary";
@@ -345,12 +343,10 @@ const refreshOccupiedAppointments = useCallback(async () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-background to-background">
-        <Navbar />
         <div className="max-w-3xl mx-auto px-4 py-24 flex flex-col items-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
           <p className="text-muted-foreground">Cargando reserva...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -359,7 +355,6 @@ const refreshOccupiedAppointments = useCallback(async () => {
   if (error || !business) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-background to-background">
-        <Navbar />
         <div className="max-w-3xl mx-auto px-4 py-24 text-center">
           <div className="mx-auto mb-6 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -368,7 +363,6 @@ const refreshOccupiedAppointments = useCallback(async () => {
           <p className="text-muted-foreground mb-6">{error ?? "Revisá el enlace e intentá de nuevo."}</p>
           <Button asChild><Link to="/">Ver todos los negocios</Link></Button>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -377,7 +371,6 @@ const refreshOccupiedAppointments = useCallback(async () => {
   if (step === 4 && selectedService && selectedProfessional && booking.date) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-background to-background">
-        <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-16">
           <div className="bg-card border rounded-3xl p-8 md:p-12 shadow-sm text-center">
             <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center animate-in zoom-in duration-500">
@@ -400,15 +393,12 @@ const refreshOccupiedAppointments = useCallback(async () => {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 via-background to-background">
-      <Navbar />
-
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
         {/* Breadcrumb */}
         <Link
@@ -715,8 +705,6 @@ const refreshOccupiedAppointments = useCallback(async () => {
           )}
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

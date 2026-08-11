@@ -21,8 +21,6 @@ import BusinessServicesStep from "../components/BusinessServicesStep";
 import BusinessEmployeesStep from "../components/BusinessEmployeesStep";
 import BusinessScheduleStep from "../components/BusinessScheduleStep";
 
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import BookingStepper from "@/features/booking/components/BookingStepper";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
@@ -169,8 +167,6 @@ export default function RegistrarNegocioPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">
           Registrar tu negocio
@@ -227,8 +223,6 @@ export default function RegistrarNegocioPage() {
           </form>
         </Card>
       </main>
-
-      <Footer />
     </div>
   );
 }

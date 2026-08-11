@@ -5,8 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +110,6 @@ const onSubmit = async (data: FormData) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <main className="mx-auto flex max-w-md flex-col items-center px-4 py-16">
         <Card className="w-full">
           <CardHeader className="text-center space-y-2 pb-2">
@@ -367,7 +364,6 @@ const onSubmit = async (data: FormData) => {
     </Button>
   </DialogContent>
 </Dialog>
-      <Footer />
     </div>
   );
 };

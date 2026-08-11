@@ -1,8 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import { Button } from "@/components/ui/button";
 import { PLACEHOLDER_IMAGE } from "@/lib/placeholders";
 
@@ -67,11 +65,9 @@ const NegocioPerfil = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="mx-auto max-w-7xl px-4 py-20 text-center">
           <p>Cargando negocio...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -79,7 +75,6 @@ const NegocioPerfil = () => {
   if (error || !business) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="mx-auto max-w-7xl px-4 py-20 text-center">
           <h1 className="text-2xl font-bold text-foreground">
             Negocio no encontrado
@@ -89,7 +84,6 @@ const NegocioPerfil = () => {
             <Link to="/negocios">Ver todos los negocios</Link>
           </Button>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -100,8 +94,6 @@ const NegocioPerfil = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="mx-auto max-w-7xl px-4 py-8">
 
         {/* HEADER DEL NEGOCIO */}
@@ -331,8 +323,6 @@ const NegocioPerfil = () => {
           </aside>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

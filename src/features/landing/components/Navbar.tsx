@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CircleUser, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/theme-toggle";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 
 import {
@@ -161,18 +162,21 @@ const Navbar = () => {
     <CircleUser className="h-5 w-5" />
   </Button>
 )}
+          <ThemeToggle />
         </div>
 
         {/* MOBILE TOGGLE */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden"
-          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE MENU */}

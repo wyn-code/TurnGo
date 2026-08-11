@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import TermsAndConditionsDialog from "@/components/legal/TermsAndConditionsDialog";
+import SystemInfoDialog from "@/components/system-info/SystemInfoDialog";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <a href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -41,6 +42,13 @@ const Footer = () => (
               trigger={
                 <button type="button" className="text-left text-sm text-muted-foreground transition-colors hover:text-foreground">
                   Términos y condiciones
+                </button>
+              }
+            />
+            <SystemInfoDialog
+              trigger={
+                <button type="button" className="text-left text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  Información del sistema
                 </button>
               }
             />

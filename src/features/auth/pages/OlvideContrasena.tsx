@@ -4,8 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +38,6 @@ const OlvideContrasena = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <main className="mx-auto flex max-w-md flex-col items-center px-4 py-16">
         <Card className="w-full">
           {!sent ? (
@@ -99,7 +96,6 @@ const OlvideContrasena = () => {
           )}
         </Card>
       </main>
-      <Footer />
     </div>
   );
 };

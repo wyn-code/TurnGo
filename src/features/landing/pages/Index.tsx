@@ -1,4 +1,3 @@
-import Navbar from "@/features/landing/components/Navbar";
 import Hero from "@/features/landing/components/Hero";
 import BenefitsClients from "@/features/landing/components/BenefitsClients";
 import BenefitsBusiness from "@/features/landing/components/BenefitsBusiness";
@@ -7,12 +6,10 @@ import RecommendedBusinesses from "@/features/landing/components/RecommendedBusi
 import Categories from "@/features/landing/components/Categories";
 import BusinessCTA from "@/features/landing/components/BusinessCTA";
 import VIPPlan from "@/features/landing/components/VIPPlan";
-import Footer from "@/features/landing/components/Footer";
 
 const Index = () => {
   return (
     <div>
-      <Navbar />
       <Hero />
       <Categories />
       <RecommendedBusinesses />
@@ -21,7 +18,6 @@ const Index = () => {
       <HowItWorks />
       <BusinessCTA />
       <VIPPlan />
-      <Footer />
     </div>
   );
 };

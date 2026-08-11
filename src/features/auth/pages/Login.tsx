@@ -16,10 +16,6 @@ import { z } from "zod";
 
 import { useAuth } from "../contexts/AuthContext";
 
-import Navbar from "@/features/landing/components/Navbar";
-
-import Footer from "@/features/landing/components/Footer";
-
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
@@ -105,8 +101,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main
         className="
           mx-auto
@@ -348,8 +342,6 @@ const Login = () => {
           </CardContent>
         </Card>
       </main>
-
-      <Footer />
     </div>
   );
 };

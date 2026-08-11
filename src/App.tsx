@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { ErrorBoundary } from "@/components/error-boundary";
+import RootLayout from "@/components/layout/RootLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -113,11 +115,11 @@ const AppRoutes = () => {
   }, [isAnimationDisabled, location.pathname]);
 
   if (isAnimationDisabled) {
-    return <div id="main-content">{routes}</div>;
+    return <div>{routes}</div>;
   }
 
   return (
-    <div key={location.pathname} ref={pageContainerRef} id="main-content" className="page-enter">
+    <div key={location.pathname} ref={pageContainerRef} className="page-enter">
       {routes}
     </div>
   );
@@ -138,22 +140,26 @@ const SkipLink = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <SkipLink />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <MembershipProvider>
-            <Suspense fallback={<PageLoader />}>
-              <AppRoutes />
-            </Suspense>
-          </MembershipProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <SkipLink />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <MembershipProvider>
+              <RootLayout>
+                <Suspense fallback={<PageLoader />}>
+                  <AppRoutes />
+                </Suspense>
+              </RootLayout>
+            </MembershipProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

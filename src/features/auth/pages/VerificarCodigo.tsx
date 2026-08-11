@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -55,7 +53,6 @@ const VerificarCodigo = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <main className="mx-auto flex max-w-md flex-col items-center px-4 py-16">
         <Card className="w-full">
           <CardHeader className="text-center space-y-2 pb-2">
@@ -109,7 +106,6 @@ const VerificarCodigo = () => {
           </CardContent>
         </Card>
       </main>
-      <Footer />
     </div>
   );
 };

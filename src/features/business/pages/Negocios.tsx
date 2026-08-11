@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
-import Navbar from "@/features/landing/components/Navbar";
-import Footer from "@/features/landing/components/Footer";
 import BusinessGrid from "@/features/marketplace/components/BusinessesGrid";
 import { businessService } from "@/services/business.service";
 import { cn } from "@/lib/utils";
@@ -119,8 +117,6 @@ const Negocios = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -242,8 +238,6 @@ const Negocios = () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };
