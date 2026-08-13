@@ -152,8 +152,15 @@ export default function MiSuscripcion() {
             className="text-red-800 underline"
             onClick={() => navigate("/dashboard/planes")}
           >
-            Ver planes
+            Renovar ahora
           </Button>
+        </div>
+      )}
+
+      {estado === "pendiente" && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center text-sm text-yellow-800">
+          Tu pago está pendiente de confirmación. Las funcionalidades del
+          plan se activarán apenas se acredite.
         </div>
       )}
 

@@ -116,7 +116,7 @@ export default function BusinessLocationStep({ form }: Props) {
           {...register("id_provincia")}
           id="id_provincia"
           disabled={loadingProvincias}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground"
         >
           <option value="">{loadingProvincias ? "Cargando..." : "Seleccioná provincia"}</option>
           {provincias.map((p) => (
@@ -134,7 +134,7 @@ export default function BusinessLocationStep({ form }: Props) {
           value={selectedLocalidadId ?? ""}
           onChange={handleLocalidadChange}
           disabled={!selectedProvinciaId || loadingLocalidades}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground"
         >
           <option value="">
             {loadingLocalidades ? "Buscando ciudades..." : "Seleccioná ciudad"}

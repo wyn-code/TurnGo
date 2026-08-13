@@ -55,7 +55,7 @@ export default function BusinessInfoStep({ form }: Props) {
           {...register("id_categoria")}
           id="id_categoria"
           disabled={isLoading}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground"
         >
           <option value="">
             {isLoading ? "Cargando rubros..." : "Seleccioná una categoría"}

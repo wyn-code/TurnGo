@@ -52,6 +52,13 @@ export interface ApiNegocio {
 
   descripcion?: string;
 
+  categoria?: {
+    id_categoria: number;
+    nombre: string;
+    icono?: string | null;
+    descripcion?: string | null;
+  } | null;
+
   imagenes?: {
     id_imagen: number;
     url: string;

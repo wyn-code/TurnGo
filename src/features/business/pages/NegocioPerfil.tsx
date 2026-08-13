@@ -88,9 +88,16 @@ const NegocioPerfil = () => {
     );
   }
   const portada =
-  business.imagenes?.find((img) => img.es_portada)?.url ||
-  business.imagenes?.[0]?.url ||
-  PLACEHOLDER_IMAGE
+    business.imagenes?.find((img) => img.es_portada)?.url ||
+    business.imagenes?.[0]?.url ||
+    business.logo ||
+    business.categoria?.icono ||
+    PLACEHOLDER_IMAGE;
+
+  const perfilFoto =
+    business.logo ||
+    business.categoria?.icono ||
+    PLACEHOLDER_IMAGE;
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,9 +106,34 @@ const NegocioPerfil = () => {
         {/* HEADER DEL NEGOCIO */}
         <div className="mb-10">
 
-          <h1 className="text-5xl font-bold">
-            {business.nombre}
-          </h1>
+          <div className="flex items-center gap-4">
+
+            <img
+              src={perfilFoto}
+              alt={`Logo de ${business.nombre}`}
+              className="h-24 w-24 rounded-full border border-border object-cover"
+            />
+
+            <div>
+              <h1 className="text-5xl font-bold">
+                {business.nombre}
+              </h1>
+
+              {business.categoria && (
+                <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-sm text-muted-foreground">
+                  {business.categoria.icono && (
+                    <img
+                      src={business.categoria.icono}
+                      alt={business.categoria.nombre}
+                      className="h-5 w-5 rounded-full object-cover"
+                    />
+                  )}
+                  {business.categoria.nombre}
+                </span>
+              )}
+            </div>
+
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-6 text-muted-foreground">
 
@@ -176,7 +208,7 @@ const NegocioPerfil = () => {
           ) : (
 
             <img
-              src="https://images.unsplash.com/photo-1621605815971-fbc98d665033"
+              src={portada}
               alt={business.nombre}
               className="h-[500px] w-full rounded-3xl object-cover"
             />

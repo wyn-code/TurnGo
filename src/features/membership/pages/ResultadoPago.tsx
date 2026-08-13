@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useMembership } from "@/features/membership/contexts/MembershipContext";
+import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
 type PaymentStatus = "approved" | "failure" | "pending" | null;
@@ -34,15 +36,24 @@ export default function ResultadoPago() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { refresh } = useMembership();
+  const { refreshUser } = useAuth();
+  const queryClient = useQueryClient();
   const [status] = useState<PaymentStatus>(
     (searchParams.get("status") as PaymentStatus) ?? null
   );
 
   useEffect(() => {
     if (status === "approved") {
-      refresh();
+      void refreshUser();
+      void refresh();
+      queryClient.invalidateQueries({
+        queryKey: ["suscripcion-actual"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["funciones-negocio"],
+      });
     }
-  }, [status, refresh]);
+  }, [status, refresh, refreshUser, queryClient]);
 
   if (!status) {
     return (

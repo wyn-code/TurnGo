@@ -34,8 +34,8 @@ function TimeSelect({
       <select
         value={hours || "09"}
         onChange={(e) => handleHourChange(e.target.value)}
-className="h-9 w-16 rounded-md border-0 bg-transparent text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-        >
+        className="h-9 w-16 cursor-pointer rounded-md border-0 bg-background text-center text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring [&>option]:bg-background [&>option]:text-foreground"
+      >
           {HOURS.map((h) => (
             <option key={h} value={h}>{h}</option>
           ))}
@@ -44,7 +44,7 @@ className="h-9 w-16 rounded-md border-0 bg-transparent text-center text-sm focus
         <select
           value={minutes || "00"}
           onChange={(e) => handleMinuteChange(e.target.value)}
-          className="h-9 w-16 rounded-md border-0 bg-transparent text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="h-9 w-16 cursor-pointer rounded-md border-0 bg-background text-center text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring [&>option]:bg-background [&>option]:text-foreground"
       >
         {MINUTES.map((m) => (
           <option key={m} value={m}>{m}</option>

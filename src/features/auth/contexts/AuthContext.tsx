@@ -64,6 +64,8 @@ interface AuthContextType {
     token: string,
   ) => Promise<AuthResult>;
 
+  refreshUser: () => Promise<User | null>;
+
   loginWithGoogle: (
     credential: string,
   ) => Promise<GoogleAuthResult>;
@@ -552,6 +554,30 @@ const logout = () => {
   apiClient.clearToken();
 };
 
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const userData = await authService.me();
+
+      const refreshedUser = normalizeUser(
+        userData as unknown as Record<
+          string,
+          unknown
+        >,
+      );
+
+      setUser(refreshedUser);
+
+      localStorage.setItem(
+        USER_KEY,
+        JSON.stringify(refreshedUser),
+      );
+
+      return refreshedUser;
+    } catch {
+      return null;
+    }
+  };
+
   return (
 <AuthContext.Provider
   value={{
@@ -567,6 +593,7 @@ const logout = () => {
       verifyCredentials,
       loginWithToken,
       loginWithGoogle,
+      refreshUser,
 
       register,
 

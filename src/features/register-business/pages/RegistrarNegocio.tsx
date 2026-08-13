@@ -26,7 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 
 export default function RegistrarNegocioPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,6 +119,8 @@ export default function RegistrarNegocioPage() {
       if (horarios.length > 0) {
         await horarioService.createOrUpdate(idNegocio, horarios);
       }
+
+      await refreshUser();
 
       setSubmitted(true);
     } catch (err) {

@@ -10,12 +10,22 @@ interface BusinessCardProps {
 }
 
 const BusinessCard = ({ business, categories }: BusinessCardProps) => {
-  const categoryName =
+  const category =
     categories.find(
       (cat) => cat.id_categoria === business.id_categoria
-    )?.nombre ?? "Sin Categoría";
+    ) ?? null;
 
-  const coverImage = getCategoryImage(categoryName);
+  const categoryName = category?.nombre ?? "Sin Categoría";
+
+  const portadaImage = business.imagenes?.find(
+    (img) => img.es_portada
+  )?.url ?? business.imagenes?.[0]?.url;
+
+  const coverImage =
+    business.logo ||
+    portadaImage ||
+    category?.icono ||
+    getCategoryImage(categoryName);
 
   return (
     <Link
