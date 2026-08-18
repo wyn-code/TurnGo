@@ -122,6 +122,17 @@ export interface ApiTurno {
   };
 }
 
+export interface ApiTurnoDisponibilidad {
+  id_turno: number;
+  id_negocio: number;
+  id_servicio: number;
+  id_estado: number;
+  id_empleado: number | null;
+  fecha_hora_inicio: string;
+  fecha_hora_fin: string | null;
+  rechazado_motivo?: string | null;
+}
+
 export interface ApiHorario {
   id_horarios_negocio?: number;
   id_negocio?: number;

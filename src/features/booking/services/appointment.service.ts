@@ -1,5 +1,5 @@
 import apiClient from "@/lib/api-client";
-import type { ApiTurno } from "@/types/api";
+import type { ApiTurno, ApiTurnoDisponibilidad } from "@/types/api";
 
 export interface CreateAppointmentRequest {
   id_negocio: number;
@@ -30,6 +30,15 @@ export const appointmentService = {
     id_empleado?: string | number;
   }): Promise<ApiTurno[]> => {
     return apiClient.get<ApiTurno[]>("/turnos/por-rango", params);
+  },
+
+  getDisponibilidad: async (params: {
+    id_negocio: string | number;
+    desde: string;
+    hasta: string;
+    id_empleado?: string | number;
+  }): Promise<ApiTurnoDisponibilidad[]> => {
+    return apiClient.get<ApiTurnoDisponibilidad[]>("/turnos/disponibilidad", params);
   },
 
   updateAppointment: async (

@@ -36,7 +36,7 @@ import type {
   ApiNegocio,
   ApiServicio,
   ApiEmpleado,
-  ApiTurno,
+  ApiTurnoDisponibilidad,
   ApiHorario,
 } from "@/types/api";
 import { ApiError } from "@/lib/api-client";
@@ -58,7 +58,7 @@ const SLOT_INTERVAL = 30;
 
 const generateTimeSlots = (
   selectedDate: Date | null,
-  occupied: ApiTurno[],
+  occupied: ApiTurnoDisponibilidad[],
   duration: number,
   ranges?: { start: string; end: string }[],
 ): TimeSlot[] => {
@@ -132,7 +132,7 @@ const Reservar = () => {
     client: { firstName: "", lastName: "", phone: "", email: "", notes: "" },
   });
 
-  const [occupiedAppointments, setOccupiedAppointments] = useState<ApiTurno[]>([]);
+  const [occupiedAppointments, setOccupiedAppointments] = useState<ApiTurnoDisponibilidad[]>([]);
   const [occupiedDays, setOccupiedDays] = useState<Set<string>>(new Set());
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -220,7 +220,7 @@ const refreshOccupiedAppointments = useCallback(async () => {
     const desde = buildLocalDateTimeString(booking.date, "00:00");
     const hasta = buildLocalDateTimeString(booking.date, "23:59");
 
-    const res = await appointmentService.getAppointmentsByRange({
+    const res = await appointmentService.getDisponibilidad({
       id_negocio: String(business.id_negocio),
       desde,
       hasta,
@@ -246,14 +246,14 @@ const refreshOccupiedAppointments = useCallback(async () => {
         const desde = buildLocalDateTimeString(monthStart, "00:00");
         const hasta = buildLocalDateTimeString(monthEnd, "23:59");
 
-        const res = await appointmentService.getAppointmentsByRange({
+        const res = await appointmentService.getDisponibilidad({
           id_negocio: String(business.id_negocio),
           desde,
           hasta,
           ...(booking.professionalId && { id_empleado: String(booking.professionalId) }),
         });
         const blocked = new Set<string>();
-        const byDay = new Map<string, ApiTurno[]>();
+        const byDay = new Map<string, ApiTurnoDisponibilidad[]>();
         res.forEach((t) => {
           const key = toLocalDateKey(new Date(t.fecha_hora_inicio));
           byDay.set(key, [...(byDay.get(key) ?? []), t]);
