@@ -1,5 +1,9 @@
 import apiClient from "@/lib/api-client";
-import type { ApiEmpleado } from "@/types/api";
+import type {
+  ApiEmpleado,
+  ApiEmpleadoCalendario,
+  ApiEmpleadoCalendarioEstadoResponse,
+} from "@/types/api";
 
 /**
  * Servicio especializado para operaciones de empleados/profesionales
@@ -106,6 +110,44 @@ export const empleadoService = {
    */
   delete: async (id: number): Promise<void> => {
     return apiClient.delete(`/empleados/${id}`);
+  },
+
+  /**
+   * Obtener el estado del calendario de un empleado
+   */
+  getCalendarioEstado: async (
+    businessId: string | number,
+    empleadoId: number
+  ): Promise<ApiEmpleadoCalendarioEstadoResponse> => {
+    return apiClient.get<ApiEmpleadoCalendarioEstadoResponse>(
+      `/negocios/${businessId}/empleados/${empleadoId}/calendario-estado`
+    );
+  },
+
+  /**
+   * Generar (o reenviar) el link de calendario por email
+   */
+  generarCalendario: async (
+    businessId: string | number,
+    empleadoId: number,
+    email: string
+  ): Promise<ApiEmpleadoCalendario> => {
+    return apiClient.post<ApiEmpleadoCalendario>(
+      `/negocios/${businessId}/empleados/${empleadoId}/generar-calendario`,
+      { email }
+    );
+  },
+
+  /**
+   * Revocar el acceso al calendario de un empleado
+   */
+  revocarCalendario: async (
+    businessId: string | number,
+    empleadoId: number
+  ): Promise<ApiEmpleadoCalendario> => {
+    return apiClient.post<ApiEmpleadoCalendario>(
+      `/negocios/${businessId}/empleados/${empleadoId}/revocar-calendario`
+    );
   },
 };
 

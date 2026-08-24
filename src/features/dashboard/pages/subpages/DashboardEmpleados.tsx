@@ -2,15 +2,30 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerOff, Power, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  PowerOff,
+  Power,
+  Loader2,
+  Calendar,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { ApiEmpleado } from "@/types/api";
 import { EmployeeForm, type EmployeeFormValues } from "./services/EmployeeForm";
+import {
+  CalendarDialog,
+  type CalendarFormValues,
+} from "./empleados/CalendarDialog";
+import { RevokeCalendarDialog } from "./empleados/RevokeCalendarDialog";
+import { EmpleadoCalendarioBadge } from "./empleados/EmpleadoCalendarioBadge";
 import { useDashboardBusiness } from "@/features/dashboard/contexts/DashboardBusinessContext";
 import { useEmployees } from "@/hooks/queries/useEmployeesQuery";
 import { useCreateEmployee } from "@/hooks/mutations/useCreateEmployee";
 import { useToggleEmployee } from "@/hooks/mutations/useToggleEmployee";
 import { useUpdateEmployee } from "@/hooks/mutations/useUpdateEmployee";
+import { useGenerarCalendario } from "@/hooks/mutations/useGenerarCalendario";
+import { useRevocarCalendario } from "@/hooks/mutations/useRevocarCalendario";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
@@ -28,9 +43,16 @@ const DashboardEmpleados = () => {
   const createMutation = useCreateEmployee();
   const updateMutation = useUpdateEmployee();
   const toggleMutation = useToggleEmployee();
+  const generarCalendarioMutation = useGenerarCalendario();
+  const revocarCalendarioMutation = useRevocarCalendario();
 
   const [selectedEmployee, setSelectedEmployee] = useState<ApiEmpleado | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const [calendarEmployee, setCalendarEmployee] = useState<ApiEmpleado | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [revokeTarget, setRevokeTarget] = useState<ApiEmpleado | null>(null);
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
 
   const filteredEmployees = showInactive
     ? employees
@@ -75,6 +97,37 @@ const DashboardEmpleados = () => {
       toast.success(
         employee.activo ? "Profesional desactivado" : "Profesional reactivado",
       );
+    } catch {
+      // El hook ya muestra el error
+    }
+  };
+
+  const handleEnviarLink = async (values: CalendarFormValues) => {
+    if (!businessId || !calendarEmployee) return;
+
+    try {
+      await generarCalendarioMutation.mutateAsync({
+        businessId,
+        empleadoId: calendarEmployee.id_empleado,
+        email: values.email,
+      });
+      toast.success(`Link de calendario enviado a ${values.email}`);
+      setIsCalendarOpen(false);
+    } catch {
+      // El hook ya muestra el error
+    }
+  };
+
+  const handleRevocar = async () => {
+    if (!businessId || !revokeTarget) return;
+
+    try {
+      await revocarCalendarioMutation.mutateAsync({
+        businessId,
+        empleadoId: revokeTarget.id_empleado,
+      });
+      setIsRevokeOpen(false);
+      setRevokeTarget(null);
     } catch {
       // El hook ya muestra el error
     }
@@ -171,6 +224,25 @@ const DashboardEmpleados = () => {
                     {employee.activo ? "Activo" : "Inactivo"}
                   </Badge>
 
+                  <EmpleadoCalendarioBadge
+                    businessId={businessId}
+                    employee={employee}
+                  />
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setCalendarEmployee(employee);
+                      setIsCalendarOpen(true);
+                    }}
+                    title="Google Calendar"
+                    aria-label={`Calendario de ${employee.nombre} ${employee.apellido}`}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <Calendar size={14} />
+                  </Button>
+
                   <Button
                     variant="ghost"
                     size="icon"
@@ -227,6 +299,34 @@ const DashboardEmpleados = () => {
         onSubmit={handleSubmit}
         employee={selectedEmployee}
         isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <CalendarDialog
+        open={isCalendarOpen}
+        onOpenChange={(open) => {
+          setIsCalendarOpen(open);
+          if (!open) setCalendarEmployee(null);
+        }}
+        businessId={businessId}
+        empleado={calendarEmployee}
+        isLoading={generarCalendarioMutation.isPending}
+        onSubmit={handleEnviarLink}
+        onRequestRevoke={() => {
+          setRevokeTarget(calendarEmployee);
+          setIsCalendarOpen(false);
+          setIsRevokeOpen(true);
+        }}
+      />
+
+      <RevokeCalendarDialog
+        open={isRevokeOpen}
+        onOpenChange={(open) => {
+          setIsRevokeOpen(open);
+          if (!open) setRevokeTarget(null);
+        }}
+        empleado={revokeTarget}
+        isLoading={revocarCalendarioMutation.isPending}
+        onConfirm={handleRevocar}
       />
     </>
   );

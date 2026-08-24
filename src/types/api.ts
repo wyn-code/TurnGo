@@ -93,6 +93,23 @@ export interface ApiEmpleado {
   activo: boolean;
 }
 
+export type ApiEmpleadoCalendarioEstado =
+  | "sin_calendario"
+  | "activo"
+  | "revocado";
+
+export interface ApiEmpleadoCalendarioEstadoResponse {
+  id_empleado: number;
+  estado: ApiEmpleadoCalendarioEstado;
+  calendario_enviado_at: string | null;
+}
+
+export interface ApiEmpleadoCalendario {
+  id_empleado: number;
+  calendario_link: string | null;
+  calendario_enviado_at: string | null;
+}
+
 export interface ApiTurno {
   id_turno: number;
   id_negocio: number;
