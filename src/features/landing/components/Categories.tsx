@@ -1,50 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { businessService } from "@/services/business.service";
-import type { ApiCategory } from "@/types/api";
+import { useCategories } from "@/hooks/useApi";
 import { PLACEHOLDER_IMAGE } from "@/lib/placeholders";
 
 const fallbackImage = PLACEHOLDER_IMAGE;
 
 const Categories = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: categories = [], isLoading, error } = useCategories();
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
 
   const handleCategoryClick = (idCategoria: number) => {
     navigate(`/negocios?categoria=${idCategoria}`);
   };
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const data = await businessService.getCategories();
-
-        if (!Array.isArray(data)) {
-          throw new Error("Datos inválidos recibidos");
-        }
-
-        setCategories(data);
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Error al cargar categorías";
-
-        console.error("Error cargando categorías:", errorMessage);
-
-        setError(errorMessage);
-        setCategories([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadCategories();
-  }, []);
 
   useEffect(() => {
     if (categories.length > 0 && activeCategory === null) {
@@ -74,7 +42,9 @@ const Categories = () => {
 
         {error && (
           <div className="mt-12 text-center">
-            <p className="text-destructive">Error: {error}</p>
+            <p className="text-destructive">
+              Error: {error instanceof Error ? error.message : "Error al cargar categorías"}
+            </p>
           </div>
         )}
 

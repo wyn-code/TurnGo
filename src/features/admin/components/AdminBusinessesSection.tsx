@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ApiNegocio } from "@/types/api";
 import { EditBusinessModal } from "@/features/admin/components/EditBusinessModal";
 import { DeleteBusinessDialog } from "@/features/admin/components/DeleteBusinessDialog";
@@ -14,28 +14,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pencil, Trash2, ExternalLink, Search } from "lucide-react";
-import { businessService } from "@/services/business.service";
 import { toast } from "sonner";
+import { useAdminBusinesses } from "@/hooks/queries/useAdminQueries";
+import {
+  useDeleteAdminBusiness,
+  useUpdateAdminBusiness,
+} from "@/hooks/mutations/useAdminMutations";
 
 export function AdminBusinessesSection() {
-  const [businesses, setBusinesses] = useState<ApiNegocio[]>([]);
   const [search, setSearch] = useState("");
   const [editBusiness, setEditBusiness] = useState<ApiNegocio | null>(null);
   const [deleteBusiness, setDeleteBusiness] = useState<ApiNegocio | null>(null);
+  const businessesQuery = useAdminBusinesses();
+  const updateBusiness = useUpdateAdminBusiness();
+  const deleteBusinessMutation = useDeleteAdminBusiness();
+  const businesses = businessesQuery.data ?? [];
 
   useEffect(() => {
-    const fetchNegocios = async () => {
-      try {
-        const data = await businessService.getAllAdmin();
-        setBusinesses(data);
-      } catch (error) {
-        console.error("Error cargando negocios:", error);
-        toast.error("No se pudieron cargar los negocios");
-      }
-    };
+    if (!businessesQuery.isError) return;
 
-    fetchNegocios();
-  }, []);
+    console.error("Error cargando negocios:", businessesQuery.error);
+    toast.error("No se pudieron cargar los negocios");
+  }, [businessesQuery.error, businessesQuery.isError]);
 
   const filtered = businesses.filter((b) => {
     const q = search.toLowerCase();
@@ -48,10 +48,7 @@ export function AdminBusinessesSection() {
 
   const handleSave = async (updated: ApiNegocio) => {
     try {
-      const saved = await businessService.update(updated.id_negocio, updated);
-      setBusinesses((prev) =>
-        prev.map((b) => (b.id_negocio === saved.id_negocio ? saved : b)),
-      );
+      await updateBusiness.mutateAsync({ id: updated.id_negocio, data: updated });
       toast.success("Negocio actualizado");
     } catch (error) {
       console.error("Error actualizando negocio:", error);
@@ -62,8 +59,7 @@ export function AdminBusinessesSection() {
 
   const handleDelete = async (id: number) => {
     try {
-      await businessService.delete(id);
-      setBusinesses((prev) => prev.filter((b) => b.id_negocio !== id));
+      await deleteBusinessMutation.mutateAsync(id);
       toast.success("Negocio eliminado correctamente");
     } catch (error) {
       console.error("Error eliminando negocio:", error);
@@ -77,13 +73,10 @@ export function AdminBusinessesSection() {
     const nextActivo = !business.activo;
 
     try {
-      const updated = await businessService.update(business.id_negocio, {
-        activo: nextActivo,
+      await updateBusiness.mutateAsync({
+        id: business.id_negocio,
+        data: { activo: nextActivo },
       });
-
-      setBusinesses((prev) =>
-        prev.map((b) => (b.id_negocio === updated.id_negocio ? updated : b)),
-      );
 
       toast.success(
         nextActivo ? "Negocio autorizado y habilitado" : "Negocio desautorizado",

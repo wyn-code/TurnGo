@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { servicioService } from "@/services/servicio.service";
 import type { ApiServicio } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export type ServicesQueryOptions = {
   /** Incluir servicios inactivos/eliminados (soft-delete en el backend). */
@@ -10,7 +11,10 @@ export type ServicesQueryOptions = {
 export const getServicesQueryKey = (
   businessId: string | number | null,
   options?: ServicesQueryOptions,
-) => ["services", businessId, options?.includeInactive ?? false] as const;
+) =>
+  businessId == null
+    ? ["services", "disabled", { includeInactive: options?.includeInactive ?? false }] as const
+    : queryKeys.services.byBusiness(businessId, options?.includeInactive ?? false);
 
 /**
  * Hook para obtener servicios de un negocio con caché de React Query.

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { horarioService } from "@/services/horario.service";
 import type { ApiHorario } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * React Query hook para obtener horarios de un negocio
@@ -10,7 +11,10 @@ import type { ApiHorario } from "@/types/api";
  */
 export const useHorarios = (businessId: string | number | null) => {
   return useQuery<ApiHorario[], Error>({
-    queryKey: ["horarios", businessId],
+    queryKey:
+      businessId == null
+        ? ["schedules", "disabled"]
+        : queryKeys.schedules.byBusiness(businessId),
     queryFn: () =>
       horarioService.getByBusiness(businessId as string | number),
     // Solo ejecutar si hay businessId

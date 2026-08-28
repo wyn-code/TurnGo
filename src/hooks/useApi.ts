@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessService, type CreateCompleteBusinessRequest } from "@/services/business.service";
 import { servicioService } from "@/services/servicio.service";
 import { empleadoService } from "@/services/empleado.service";
+import { queryKeys } from "@/lib/query-keys";
 
 // Hook para crear un negocio
 export const useCreateBusiness = () => {
@@ -15,9 +16,9 @@ export const useCreateBusiness = () => {
   >({
     mutationFn: (data) => businessService.createCompleteBusiness(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["businesses"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.businesses.root() });
       if (data && typeof data === "object" && "slug" in data) {
-        queryClient.setQueryData(["business", (data as any).slug], data);
+        queryClient.setQueryData(queryKeys.businesses.bySlug((data as any).slug), data);
       }
     },
     onError: (error: Error) => {
@@ -29,7 +30,7 @@ export const useCreateBusiness = () => {
 // Hook para obtener todos los negocios
 export const useBusinesses = (params?: { category?: string; city?: string; page?: number; limit?: number }) => {
   return useQuery({
-    queryKey: ["businesses", params],
+    queryKey: queryKeys.businesses.all(params),
     queryFn: () => businessService.getAllBusinesses(params),
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
@@ -39,7 +40,7 @@ export const useBusinesses = (params?: { category?: string; city?: string; page?
 // Hook para obtener un negocio por usuario
 export const useMyBusiness = (usuarioId?: string | number) => {
   return useQuery({
-    queryKey: ["my-business", usuarioId],
+    queryKey: usuarioId == null ? ["businesses", "mine", null] : queryKeys.businesses.mine(usuarioId),
     queryFn: () => businessService.getMyBusiness(usuarioId),
     enabled: usuarioId != null,
     staleTime: 2 * 60 * 1000,
@@ -49,7 +50,7 @@ export const useMyBusiness = (usuarioId?: string | number) => {
 // Hook para obtener un negocio por slug
 export const useBusinessBySlug = (slug: string) => {
   return useQuery({
-    queryKey: ["business", slug],
+    queryKey: queryKeys.businesses.bySlug(slug),
     queryFn: () => businessService.getBusinessBySlug(slug),
     staleTime: 10 * 60 * 1000, // 10 minutos
     enabled: !!slug,
@@ -57,18 +58,18 @@ export const useBusinessBySlug = (slug: string) => {
 };
 
 // Hook para obtener servicios de un negocio
-export const useBusinessServices = (businessId: string) => {
+export const useBusinessServices = (businessId: string | number) => {
   return useQuery({
-    queryKey: ["services", businessId],
+    queryKey: queryKeys.services.byBusiness(businessId),
     queryFn: () => servicioService.getByBusiness(businessId),
     enabled: !!businessId,
   });
 };
 
 // Hook para obtener profesionales de un negocio
-export const useBusinessProfessionals = (businessId: string) => {
+export const useBusinessProfessionals = (businessId: string | number) => {
   return useQuery({
-    queryKey: ["professionals", businessId],
+    queryKey: queryKeys.employees.byBusiness(businessId),
     queryFn: () => empleadoService.getByBusiness(businessId),
     enabled: !!businessId,
   });
@@ -76,7 +77,7 @@ export const useBusinessProfessionals = (businessId: string) => {
 
 export const useCategories = () => {
   return useQuery({
-    queryKey: ["categories"],
+    queryKey: queryKeys.categories.all(),
     queryFn: businessService.getCategories,
     staleTime: 1000 * 60 * 60,
   });

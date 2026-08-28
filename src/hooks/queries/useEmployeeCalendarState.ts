@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { empleadoService } from "@/services/empleado.service";
 import type { ApiEmpleadoCalendarioEstadoResponse } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * React Query hook para obtener el estado del calendario de un empleado
@@ -12,7 +13,10 @@ export const useEmployeeCalendarState = (
   empleadoId: number | null,
 ) => {
   return useQuery<ApiEmpleadoCalendarioEstadoResponse, Error>({
-    queryKey: ["employee-calendar-state", businessId, empleadoId],
+    queryKey:
+      businessId == null || empleadoId == null
+        ? ["employees", "calendar-state", "disabled"]
+        : queryKeys.employees.calendarState(businessId, empleadoId),
     queryFn: () =>
       empleadoService.getCalendarioEstado(
         businessId as string | number,

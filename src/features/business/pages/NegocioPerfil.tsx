@@ -1,13 +1,11 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PLACEHOLDER_IMAGE } from "@/lib/placeholders";
-
-import { businessService } from "@/services/business.service";
-import { servicioService } from "@/services/servicio.service";
-import { empleadoService } from "@/services/empleado.service";
-import type { ApiNegocio, ApiEmpleado, ApiServicio } from "@/types/api";
+import { useBusinessBySlug } from "@/hooks/useApi";
+import { useServices } from "@/hooks/queries/useServicesQuery";
+import { useEmployees } from "@/hooks/queries/useEmployeesQuery";
+import type { ApiServicio } from "@/types/api";
 
 import Map from "@/features/business/components/Map";
 import HorarioCard from "@/features/business/components/HorarioCard";
@@ -17,44 +15,18 @@ import { Instagram, MapPin, Phone } from "lucide-react";
 const NegocioPerfil = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-
-  const [business, setBusiness] = useState<ApiNegocio | null>(null);
-  const [services, setServices] = useState<ApiServicio[]>([]);
-  const [professionals, setProfessionals] = useState<ApiEmpleado[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);;
-
-  useEffect(() => {
-    const loadBusinessData = async () => {
-      try {
-        if (!slug) {
-          throw new Error("Slug no recibido");
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        const businessData = await businessService.getBusinessBySlug(slug);
-
-        setBusiness(businessData);
-
-        const [servicesData, professionalsData] = await Promise.all([
-          servicioService.getByBusiness(businessData.id_negocio),
-          empleadoService.getByBusiness(businessData.id_negocio),
-        ]);
-
-        setServices(servicesData);
-        setProfessionals(professionalsData);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudo cargar el negocio");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadBusinessData();
-  }, [slug]);
+  const businessQuery = useBusinessBySlug(slug ?? "");
+  const business = businessQuery.data ?? null;
+  const businessId = business?.id_negocio ?? null;
+  const servicesQuery = useServices(businessId);
+  const employeesQuery = useEmployees(businessId);
+  const services = servicesQuery.data ?? [];
+  const professionals = employeesQuery.data ?? [];
+  const isLoading =
+    businessQuery.isLoading ||
+    (businessId != null && (servicesQuery.isLoading || employeesQuery.isLoading));
+  const error =
+    businessQuery.error ?? servicesQuery.error ?? employeesQuery.error ?? null;
 
   const handleBook = (service: ApiServicio) => {
     if (!business?.slug) return;

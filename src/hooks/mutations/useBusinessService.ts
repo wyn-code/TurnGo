@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import businessService from "@/services/business.service";
 import type { ApiNegocio } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export type BusinessConfigChanges = {
   nombre?: string;
@@ -35,14 +36,18 @@ export const useUpdateBusiness = () => {
       ),
 
     onSuccess: (updatedBusiness) => {
-      queryClient.invalidateQueries({ queryKey: ["businesses"] });
-      queryClient.invalidateQueries({ queryKey: ["my-business"] });
-      queryClient.setQueryData(
-        ["my-business", updatedBusiness.usuario_id],
-        updatedBusiness,
-      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.businesses.root() });
+      if (updatedBusiness.usuario_id != null) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.businesses.mine(updatedBusiness.usuario_id),
+        });
+        queryClient.setQueryData(
+          queryKeys.businesses.mine(updatedBusiness.usuario_id),
+          updatedBusiness,
+        );
+      }
       if (updatedBusiness.slug) {
-        queryClient.setQueryData(["business", updatedBusiness.slug], updatedBusiness);
+        queryClient.setQueryData(queryKeys.businesses.bySlug(updatedBusiness.slug), updatedBusiness);
       }
       toast.success("Configuración guardada correctamente");
     },

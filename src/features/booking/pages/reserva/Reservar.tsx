@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
@@ -15,12 +15,10 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { appointmentService } from "@/features/booking/services/appointment.service";
-import { businessService } from "@/services/business.service";
-import { servicioService } from "@/services/servicio.service";
-import { empleadoService } from "@/services/empleado.service";
-import { horarioService } from "@/services/horario.service";
-import { clientService } from "@/services/cliente.service";
+import { useBusinessBySlug } from "@/hooks/useApi";
+import { useServices } from "@/hooks/queries/useServicesQuery";
+import { useEmployees } from "@/hooks/queries/useEmployeesQuery";
+import { useHorarios } from "@/hooks/queries/useHorariosQuery";
 
 import { cn } from "@/lib/utils";
 
@@ -33,19 +31,23 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import type {
   BookingData,
-  ApiNegocio,
-  ApiServicio,
-  ApiEmpleado,
   ApiTurnoDisponibilidad,
   ApiHorario,
 } from "@/types/api";
 import { ApiError } from "@/lib/api-client";
 import { buildLocalDateTimeString } from "@/lib/datetime-utils";
 import { apiDayToWeekDayIndex, WEEK_DAYS } from "@/lib/schedule-utils";
+import { useAppointmentAvailability } from "@/features/booking/hooks/useAppointmentAvailability";
+import {
+  useCreateAppointment,
+  useUpsertClient,
+} from "@/features/booking/hooks/useBookingMutations";
 
 const STEPS = ["Servicio", "Fecha y horario", "Datos", "Completado"];
 
 type TimeSlot = { id: string; time: string; available: boolean };
+
+const EMPTY_AVAILABILITY: ApiTurnoDisponibilidad[] = [];
 
 const pad = (v: number) => String(v).padStart(2, "0");
 const toLocalDateKey = (d: Date) =>
@@ -117,11 +119,30 @@ const Reservar = () => {
   const [searchParams] = useSearchParams();
   const preSelectedService = searchParams.get("servicio") || "";
 
-  const [business, setBusiness] = useState<(ApiNegocio & { horarios?: ApiHorario[]; }) | null>(null);
-  const [services, setServices] = useState<ApiServicio[]>([]);
-  const [professionals, setProfessionals] = useState<ApiEmpleado[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const businessQuery = useBusinessBySlug(slug ?? "");
+  const businessId = businessQuery.data?.id_negocio ?? null;
+  const servicesQuery = useServices(businessId);
+  const employeesQuery = useEmployees(businessId);
+  const schedulesQuery = useHorarios(businessId);
+  const services = servicesQuery.data ?? [];
+  const professionals = employeesQuery.data ?? [];
+  const business = useMemo(
+    () =>
+      businessQuery.data
+        ? { ...businessQuery.data, horarios: schedulesQuery.data ?? [] }
+        : null,
+    [businessQuery.data, schedulesQuery.data],
+  );
+  const isLoading =
+    businessQuery.isLoading ||
+    (businessId != null &&
+      (servicesQuery.isLoading ||
+        employeesQuery.isLoading ||
+        schedulesQuery.isLoading));
+  const error =
+    !slug || businessQuery.error || servicesQuery.error || employeesQuery.error
+      ? "No se pudo cargar el negocio para reservar"
+      : null;
 
   const [step, setStep] = useState(1);
   const [booking, setBooking] = useState<BookingData>({
@@ -132,38 +153,9 @@ const Reservar = () => {
     client: { firstName: "", lastName: "", phone: "", email: "", notes: "" },
   });
 
-  const [occupiedAppointments, setOccupiedAppointments] = useState<ApiTurnoDisponibilidad[]>([]);
-  const [occupiedDays, setOccupiedDays] = useState<Set<string>>(new Set());
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [createdTurnoId, setCreatedTurnoId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        if (!slug) throw new Error("Slug no recibido");
-        setIsLoading(true);
-        setError(null);
-        const businessData = await businessService.getBusinessBySlug(slug);
-        const [servicesData, professionalsData, horariosData] = await Promise.all([
-          servicioService.getByBusiness(businessData.id_negocio),
-          empleadoService.getByBusiness(businessData.id_negocio),
-          horarioService.getByBusiness(businessData.id_negocio).catch(() => []),
-        ]);
-        setBusiness({ ...businessData, horarios: horariosData });
-        setServices(servicesData);
-        setProfessionals(professionalsData);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudo cargar el negocio para reservar");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, [slug]);
 
   const getBusinessHoursForDate = useCallback(
   (b: typeof business, date: Date | null) => {
@@ -200,6 +192,63 @@ const Reservar = () => {
   const serviceDuration = selectedService?.duracion_min ?? 30;
   const businessHours = getBusinessHoursForDate(business, booking.date);
 
+  const dayAvailabilityParams = useMemo(() => {
+    if (businessId == null || booking.date == null) return null;
+
+    return {
+      businessId,
+      desde: buildLocalDateTimeString(booking.date, "00:00"),
+      hasta: buildLocalDateTimeString(booking.date, "23:59"),
+      employeeId: booking.professionalId || null,
+    };
+  }, [businessId, booking.date, booking.professionalId]);
+  const monthAvailabilityParams = useMemo(() => {
+    if (businessId == null) return null;
+
+    const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+    const monthEnd = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0);
+    return {
+      businessId,
+      desde: buildLocalDateTimeString(monthStart, "00:00"),
+      hasta: buildLocalDateTimeString(monthEnd, "23:59"),
+      employeeId: booking.professionalId || null,
+    };
+  }, [businessId, visibleMonth, booking.professionalId]);
+  const dayAvailabilityQuery = useAppointmentAvailability(dayAvailabilityParams);
+  const monthAvailabilityQuery = useAppointmentAvailability(monthAvailabilityParams);
+  const upsertClient = useUpsertClient();
+  const createAppointment = useCreateAppointment();
+  const isSubmitting = upsertClient.isPending || createAppointment.isPending;
+  const occupiedAppointments = dayAvailabilityQuery.data ?? EMPTY_AVAILABILITY;
+  const isLoadingSlots = dayAvailabilityQuery.isLoading;
+
+  const occupiedDays = useMemo(() => {
+    if (!business || monthAvailabilityParams == null) return new Set<string>();
+
+    const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+    const monthEnd = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0);
+    const byDay = new Map<string, ApiTurnoDisponibilidad[]>();
+    for (const appointment of monthAvailabilityQuery.data ?? []) {
+      const key = toLocalDateKey(new Date(appointment.fecha_hora_inicio));
+      byDay.set(key, [...(byDay.get(key) ?? []), appointment]);
+    }
+
+    const blocked = new Set<string>();
+    for (let dayOffset = 0; ; dayOffset++) {
+      const day = new Date(monthStart.getFullYear(), monthStart.getMonth(), monthStart.getDate() + dayOffset);
+      if (day > monthEnd) break;
+      const key = toLocalDateKey(day);
+      const slots = generateTimeSlots(
+        day,
+        byDay.get(key) ?? [],
+        serviceDuration,
+        getBusinessHoursForDate(business, day),
+      );
+      if (!slots.some((slot) => slot.available)) blocked.add(key);
+    }
+    return blocked;
+  }, [business, monthAvailabilityParams, monthAvailabilityQuery.data, visibleMonth, serviceDuration, getBusinessHoursForDate]);
+
   const timeSlots = useMemo(
     () => generateTimeSlots(booking.date, occupiedAppointments, serviceDuration, businessHours),
     [booking.date, occupiedAppointments, serviceDuration, businessHours],
@@ -207,81 +256,6 @@ const Reservar = () => {
   const availableSlots = timeSlots.filter((s) => s.available);
   const effectiveSelectedTime = booking.timeSlot;
   
-
-const refreshOccupiedAppointments = useCallback(async () => {
-  if (!business || !booking.date) {
-    setOccupiedAppointments([]);
-    return;
-  }
-  try {
-    setIsLoadingSlots(true);
-
-    // Usar strings con offset local en lugar de toISOString() (UTC)
-    const desde = buildLocalDateTimeString(booking.date, "00:00");
-    const hasta = buildLocalDateTimeString(booking.date, "23:59");
-
-    const res = await appointmentService.getDisponibilidad({
-      id_negocio: String(business.id_negocio),
-      desde,
-      hasta,
-      ...(booking.professionalId && { id_empleado: String(booking.professionalId) }),
-    });
-    setOccupiedAppointments(res);
-  } catch (e) {
-    console.error(e);
-    setOccupiedAppointments([]);
-  } finally {
-    setIsLoadingSlots(false);
-  }
-}, [business, booking.date, booking.professionalId]);
-
-  const refreshOccupiedDays = useCallback(
-    async (baseDate?: Date) => {
-      if (!business) { setOccupiedDays(new Set()); return; }
-      try {
-        const ref = baseDate ?? visibleMonth ?? booking.date ?? new Date();
-        const monthStart = new Date(ref.getFullYear(), ref.getMonth(), 1);
-        const monthEnd = new Date(ref.getFullYear(), ref.getMonth() + 1, 0); // último día del mes
-
-        const desde = buildLocalDateTimeString(monthStart, "00:00");
-        const hasta = buildLocalDateTimeString(monthEnd, "23:59");
-
-        const res = await appointmentService.getDisponibilidad({
-          id_negocio: String(business.id_negocio),
-          desde,
-          hasta,
-          ...(booking.professionalId && { id_empleado: String(booking.professionalId) }),
-        });
-        const blocked = new Set<string>();
-        const byDay = new Map<string, ApiTurnoDisponibilidad[]>();
-        res.forEach((t) => {
-          const key = toLocalDateKey(new Date(t.fecha_hora_inicio));
-          byDay.set(key, [...(byDay.get(key) ?? []), t]);
-        });
-        for (let dayOffset = 0; ; dayOffset++) {
-          const day = new Date(monthStart.getFullYear(), monthStart.getMonth(), monthStart.getDate() + dayOffset);
-          if (day > monthEnd) break;
-          const key = toLocalDateKey(day);
-          const slots = generateTimeSlots(
-            day,
-            byDay.get(key) ?? [],
-            serviceDuration,
-            getBusinessHoursForDate(business, day),
-          );
-          if (!slots.some((s) => s.available)) blocked.add(key);
-        }
-        setOccupiedDays(blocked);
-      } catch (e) {
-        console.error(e);
-        setOccupiedDays(new Set());
-      }
-    },
-    [business, visibleMonth, booking.date, booking.professionalId, serviceDuration, getBusinessHoursForDate]);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { refreshOccupiedAppointments(); }, [refreshOccupiedAppointments]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { refreshOccupiedDays(visibleMonth); }, [refreshOccupiedDays, visibleMonth, booking.professionalId]);
 
   const canNext = (): boolean => {
     switch (step) {
@@ -293,31 +267,28 @@ const refreshOccupiedAppointments = useCallback(async () => {
   };
 
   const handleConfirm = async () => {
-    const currentDate = booking.date;
     try {
       setSubmitError(null);
-      setIsSubmitting(true);
       if (!business || !booking.date || !effectiveSelectedTime || !booking.serviceId) {
         setSubmitError("Faltan datos para confirmar la reserva"); return;
       }
       if (!booking.client.firstName.trim() || !booking.client.lastName.trim() || !booking.client.phone.trim()) {
         setSubmitError("Faltan datos del cliente"); return;
       }
-      const cliente = await clientService.upsertClient({
+      const cliente = await upsertClient.mutateAsync({
         telefono: booking.client.phone.trim(),
         nombre: booking.client.firstName.trim(),
         apellido: booking.client.lastName.trim(),
         email: booking.client.email.trim() || undefined,
       });
-      await appointmentService.createAppointment({
+      const turno = await createAppointment.mutateAsync({
         id_negocio: Number(business.id_negocio),
         id_cliente: Number(cliente.id_cliente),
         id_servicio: Number(booking.serviceId),
         id_empleado: booking.professionalId ? Number(booking.professionalId) : null,
         fecha_hora_inicio: buildLocalDateTimeString(booking.date, effectiveSelectedTime),
-      }).then((res) => setCreatedTurnoId(res.id_turno));
-      await refreshOccupiedAppointments();
-      await refreshOccupiedDays(booking.date);
+      });
+      setCreatedTurnoId(turno.id_turno);
       setStep(4);
     } catch (err: unknown) {
       console.error(err);
@@ -325,8 +296,10 @@ const refreshOccupiedAppointments = useCallback(async () => {
         if (err.status === 409) {
           setSubmitError("...");
           setBooking((c) => ({ ...c, timeSlot: "" }));
-          await refreshOccupiedAppointments();
-          await refreshOccupiedDays(currentDate ?? visibleMonth);
+          await Promise.all([
+            dayAvailabilityQuery.refetch(),
+            monthAvailabilityQuery.refetch(),
+          ]);
           setStep(2);
           return;
         }
@@ -334,8 +307,6 @@ const refreshOccupiedAppointments = useCallback(async () => {
       }
       if (err instanceof Error) { setSubmitError(err.message); return; }
       setSubmitError("Error inesperado al crear la reserva");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

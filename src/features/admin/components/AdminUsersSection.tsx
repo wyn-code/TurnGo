@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ApiUsuario } from "@/types/api";
 import { EditUserModal } from "@/features/admin/components/EditUserModal";
 import { DeleteUserDialog } from "@/features/admin/components/DeleteUserDialog";
@@ -14,8 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pencil, Trash2, Search } from "lucide-react";
-import { userService } from "@/services/user.service";
 import { toast } from "sonner";
+import { useAdminUsers } from "@/hooks/queries/useAdminQueries";
+import {
+  useDeleteAdminUser,
+  useToggleAdminUserStatus,
+  useUpdateAdminUser,
+} from "@/hooks/mutations/useAdminMutations";
 
 function getUserRole(user: ApiUsuario) {
   return (user.role_us ?? user.rol ?? "—").toLowerCase();
@@ -36,24 +41,21 @@ function formatRole(role: string) {
 }
 
 export function AdminUsersSection() {
-  const [users, setUsers] = useState<ApiUsuario[]>([]);
   const [search, setSearch] = useState("");
   const [editUser, setEditUser] = useState<ApiUsuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<ApiUsuario | null>(null);
+  const usersQuery = useAdminUsers();
+  const updateUser = useUpdateAdminUser();
+  const toggleUserStatus = useToggleAdminUserStatus();
+  const deleteUserMutation = useDeleteAdminUser();
+  const users = usersQuery.data ?? [];
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await userService.getAllAdmin();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error cargando usuarios:", error);
-        toast.error("No se pudieron cargar los usuarios");
-      }
-    };
+    if (!usersQuery.isError) return;
 
-    fetchUsers();
-  }, []);
+    console.error("Error cargando usuarios:", usersQuery.error);
+    toast.error("No se pudieron cargar los usuarios");
+  }, [usersQuery.error, usersQuery.isError]);
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
@@ -67,14 +69,12 @@ export function AdminUsersSection() {
 
   const handleSave = async (updated: ApiUsuario) => {
     try {
-      const saved = await userService.update(updated.id_us, {
+      await updateUser.mutateAsync({ id: updated.id_us, data: {
         usuario_us: updated.usuario_us,
         email_us: updated.email_us,
         role_us: updated.role_us ?? updated.rol,
         estado: updated.estado,
-      });
-
-      setUsers((prev) => prev.map((u) => (u.id_us === saved.id_us ? saved : u)));
+      }});
       toast.success("Usuario actualizado");
     } catch (error) {
       console.error("Error actualizando usuario:", error);
@@ -85,8 +85,7 @@ export function AdminUsersSection() {
 
   const handleDelete = async (id: number) => {
     try {
-      await userService.delete(id);
-      setUsers((prev) => prev.filter((u) => u.id_us !== id));
+      await deleteUserMutation.mutateAsync(id);
       toast.success("Usuario eliminado correctamente");
     } catch (error) {
       console.error("Error eliminando usuario:", error);
@@ -98,18 +97,10 @@ export function AdminUsersSection() {
 
 const handleToggleStatus = async (user: ApiUsuario) => {
   try {
-    const updated = await userService.toggleStatus(
-      user.id_us,
-      !user.estado,
-    );
-
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id_us === updated.id_us
-          ? updated
-          : u,
-      ),
-    );
+    const updated = await toggleUserStatus.mutateAsync({
+      id: user.id_us,
+      estado: !user.estado,
+    });
 
     toast.success(
       updated.estado

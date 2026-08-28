@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { useMembership } from "@/features/membership/contexts/MembershipContext";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
@@ -47,10 +48,10 @@ export default function ResultadoPago() {
       void refreshUser();
       void refresh();
       queryClient.invalidateQueries({
-        queryKey: ["suscripcion-actual"],
+        queryKey: queryKeys.membership.current(),
       });
       queryClient.invalidateQueries({
-        queryKey: ["funciones-negocio"],
+        queryKey: queryKeys.membership.root(),
       });
     }
   }, [status, refresh, refreshUser, queryClient]);

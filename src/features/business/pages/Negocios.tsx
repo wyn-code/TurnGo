@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import BusinessGrid from "@/features/marketplace/components/BusinessesGrid";
-import { businessService } from "@/services/business.service";
+import { useBusinesses, useCategories } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 
-import type { City, ApiNegocio, ApiCategory } from "@/types/api";
+import type { City } from "@/types/api";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -31,10 +31,17 @@ const Negocios = () => {
   })();
   const locationName = searchParams.get("ciudad");
 
-  const [businesses, setBusinesses] = useState<ApiNegocio[]>([]);
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: businesses = [],
+    isLoading: isLoadingBusinesses,
+    error: businessesError,
+  } = useBusinesses();
+  const {
+    data: categories = [],
+    isLoading: isLoadingCategories,
+  } = useCategories();
+  const isLoading = isLoadingBusinesses || isLoadingCategories;
+  const error = businessesError ? "No se pudieron cargar los negocios" : null;
 
   const cities = useMemo<City[]>(() => {
     const uniqueCities = Array.from(
@@ -51,30 +58,6 @@ const Negocios = () => {
       slug: city.toLowerCase().replace(/\s+/g, "-"),
     }));
   }, [businesses]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const [businessesData, categoriesData] = await Promise.all([
-          businessService.getAllBusinesses(),
-          businessService.getCategories().catch(() => []),
-        ]);
-
-        setBusinesses(businessesData);
-        setCategories(categoriesData);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudieron cargar los negocios");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
 
   const filteredBusinesses = useMemo(() => {
     let result = [...businesses];

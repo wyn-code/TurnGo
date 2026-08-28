@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { empleadoService } from "@/services/empleado.service";
 import type { ApiEmpleado } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useToggleEmployee = () => {
   const queryClient = useQueryClient();
@@ -15,7 +16,7 @@ export const useToggleEmployee = () => {
       const businessKey = String(updatedEmployee.id_negocio);
 
       queryClient.setQueriesData<ApiEmpleado[]>(
-        { queryKey: ["employees", businessKey] },
+        { queryKey: queryKeys.employees.byBusiness(businessKey) },
         (old) =>
           (old ?? []).map((s) =>
             s.id_empleado === updatedEmployee.id_empleado ? updatedEmployee : s,
@@ -23,7 +24,7 @@ export const useToggleEmployee = () => {
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["employees", businessKey],
+        queryKey: queryKeys.employees.byBusiness(businessKey),
       });
     },
 

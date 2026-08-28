@@ -6,8 +6,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-import businessService from "@/services/business.service";
-import { horarioService, type BusinessSchedulePayload } from "@/services/horario.service";
+import type { BusinessSchedulePayload } from "@/services/horario.service";
 import { toCreateCompleteBusinessRequest } from "../mapper";
 import { schema, type FormData } from "../schema";
 import { defaultValues, fieldsPerStep, STEPS } from "../defaults";
@@ -24,12 +23,16 @@ import BusinessScheduleStep from "../components/BusinessScheduleStep";
 import BookingStepper from "@/features/booking/components/BookingStepper";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
+import { useCreateBusiness } from "@/hooks/useApi";
+import { useUpdateHorarios } from "@/hooks/mutations/useUpdateHorarios";
 
 export default function RegistrarNegocioPage() {
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const createBusiness = useCreateBusiness();
+  const updateHorarios = useUpdateHorarios({ showErrorToast: false });
+  const isLoading = createBusiness.isPending || updateHorarios.isPending;
 
   const navigate = useNavigate();
 
@@ -99,7 +102,6 @@ export default function RegistrarNegocioPage() {
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      setIsLoading(true);
       const userId = Number(user?.id);
 
       if (!Number.isFinite(userId) || userId <= 0) {
@@ -109,7 +111,7 @@ export default function RegistrarNegocioPage() {
       const payload = toCreateCompleteBusinessRequest(data, userId);
       const horarios = formatScheduleForBackend(data.horarios);
 
-      const negocioCreado = await businessService.createCompleteBusiness(payload);
+      const negocioCreado = await createBusiness.mutateAsync(payload);
       const idNegocio = getBusinessIdFromResponse(negocioCreado);
 
       if (!idNegocio) {
@@ -117,7 +119,11 @@ export default function RegistrarNegocioPage() {
       }
 
       if (horarios.length > 0) {
-        await horarioService.createOrUpdate(idNegocio, horarios);
+        await updateHorarios.mutateAsync({
+          businessId: idNegocio,
+          horarios,
+          hasExisting: false,
+        });
       }
 
       await refreshUser();
@@ -126,8 +132,6 @@ export default function RegistrarNegocioPage() {
     } catch (err) {
       console.error("Error al crear negocio:", err);
       toast.error("Hubo un problema al registrar el negocio.");
-    } finally {
-      setIsLoading(false);
     }
   });
 

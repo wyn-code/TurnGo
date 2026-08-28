@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import type { FormData } from "../schema";
-import type { ApiCategory } from "@/types/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import businessService from "@/services/business.service";
+import { useCategories } from "@/hooks/useApi";
 
 type Props = {
   form: UseFormReturn<FormData>;
@@ -12,28 +10,9 @@ type Props = {
 
 export default function BusinessInfoStep({ form }: Props) {
   const { register, formState: { errors } } = form;
-  
-  // 1. Estado para almacenar las categorías de la DB
-  const [categorias, setCategorias] = useState<ApiCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 2. Efecto para cargar las categorías al montar el componente
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setIsLoading(true);
-        // Llamamos a tu método del service (GET /api/categorias)
-        const data = await businessService.getCategories();
-        setCategorias(data);
-      } catch (error) {
-        console.error("Error al cargar categorías:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCategories();
-  }, []);
+  const categoriesQuery = useCategories();
+  const categorias = categoriesQuery.data ?? [];
+  const isLoading = categoriesQuery.isLoading;
 
   return (
     <div className="space-y-6">

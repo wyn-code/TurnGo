@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { membershipService } from "@/features/membership/services/membership.service";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useCrearPreferencia = () =>
   useMutation({
@@ -21,8 +22,8 @@ export const useCancelarSuscripcion = () => {
     mutationFn: (idSuscripcion: number) =>
       membershipService.cancelarSuscripcion(idSuscripcion),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suscripcion-actual"] });
-      queryClient.invalidateQueries({ queryKey: ["funciones-negocio"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.membership.current() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.membership.root() });
       toast.success("Suscripción cancelada correctamente");
     },
     onError: (error) => {
@@ -46,7 +47,7 @@ export const useToggleRenovacion = () => {
     }) =>
       membershipService.toggleRenovacionAutomatica(idSuscripcion, activa),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suscripcion-actual"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.membership.current() });
     },
     onError: (error) => {
       toast.error(

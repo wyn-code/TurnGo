@@ -4,6 +4,7 @@ import type {
   StatisticsCompare,
   StatisticsRange,
 } from "@/types/statistics";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useStatistics = (
   businessId?: number | string,
@@ -11,7 +12,10 @@ export const useStatistics = (
   comparar: StatisticsCompare = "anterior",
 ) => {
   return useQuery({
-    queryKey: ["statistics", businessId, rango, comparar],
+    queryKey:
+      businessId == null
+        ? ["statistics", "disabled", rango, comparar]
+        : queryKeys.statistics.byBusiness(businessId, rango, comparar),
     queryFn: () =>
       estadisticaService.getByBusiness(businessId!, { rango, comparar }),
     enabled: businessId != null,

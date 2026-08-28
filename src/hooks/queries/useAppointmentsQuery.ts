@@ -6,13 +6,17 @@ import {
   getLocalWeekRange,
   type DateTimeRange,
 } from "@/lib/datetime-utils";
+import { queryKeys } from "@/lib/query-keys";
 
 export type AppointmentsRange = DateTimeRange;
 
 export const getAppointmentsQueryKey = (
   businessId: string | number | null,
   range: AppointmentsRange | null,
-) => ["appointments", businessId, range?.desde, range?.hasta] as const;
+) =>
+  businessId == null || range == null
+    ? ["appointments", "disabled"] as const
+    : queryKeys.appointments.byRange(businessId, range.desde, range.hasta);
 
 export function getDayRange(date: Date): AppointmentsRange {
   return getLocalDayRange(date);

@@ -6,6 +6,7 @@ import {
   type ServicioUpdatePayload,
 } from "@/services/servicio.service";
 import type { ApiServicio } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useUpdateService = () => {
   const queryClient = useQueryClient();
@@ -17,7 +18,7 @@ export const useUpdateService = () => {
       const businessKey = String(updatedService.id_negocio);
 
       queryClient.setQueriesData<ApiServicio[]>(
-        { queryKey: ["services", businessKey] },
+        { queryKey: queryKeys.services.byBusinessRoot(businessKey) },
         (old) =>
           (old ?? []).map((s) =>
             s.id_servicio === updatedService.id_servicio ? updatedService : s,
@@ -25,7 +26,7 @@ export const useUpdateService = () => {
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["services", businessKey],
+        queryKey: queryKeys.services.byBusinessRoot(businessKey),
       });
     },
     onError: (error) => {

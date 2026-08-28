@@ -3,6 +3,7 @@ import empleadoService from "@/services/empleado.service";
 import type { ApiEmpleado } from "@/types/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/query-keys";
 
 
 export const useUpdateEmployee = () => {
@@ -26,7 +27,7 @@ export const useUpdateEmployee = () => {
       const businessKey = String(updatedEmployee.id_negocio);
 
       queryClient.setQueriesData<ApiEmpleado[]>(
-        { queryKey: ["employees", businessKey] },
+        { queryKey: queryKeys.employees.byBusiness(businessKey) },
         (old) =>
           (old ?? []).map((e) =>
             e.id_empleado === updatedEmployee.id_empleado ? updatedEmployee : e,
@@ -34,7 +35,7 @@ export const useUpdateEmployee = () => {
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["employees", businessKey],
+        queryKey: queryKeys.employees.byBusiness(businessKey),
       });
     },
 

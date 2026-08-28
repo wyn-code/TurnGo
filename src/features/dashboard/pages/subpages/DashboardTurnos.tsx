@@ -21,6 +21,7 @@ import {
   getWeekRange,
 } from "@/hooks/queries/useAppointmentsQuery";
 import { appointmentService } from "@/features/booking/services/appointment.service";
+import { queryKeys } from "@/lib/query-keys";
 import { ApiError } from "@/lib/api-client";
 import type { ApiTurno } from "@/types/api";
 
@@ -135,7 +136,7 @@ const DashboardTurnos = () => {
       rechazado_motivo?: string;
     }) => appointmentService.changeStatus(turnoId, { id_estado, rechazado_motivo }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all() });
     },
     onError: (err: unknown) => {
       const msg = err instanceof ApiError ? err.detail : "Error al cambiar estado";

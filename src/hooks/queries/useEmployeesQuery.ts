@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { empleadoService } from "@/services/empleado.service";
 import type { ApiEmpleado } from "@/types/api";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * React Query hook para obtener empleados de un negocio
@@ -10,7 +11,10 @@ import type { ApiEmpleado } from "@/types/api";
  */
 export const useEmployees = (businessId: string | number | null) => {
   return useQuery<ApiEmpleado[], Error>({
-    queryKey: ["employees", businessId],
+    queryKey:
+      businessId == null
+        ? ["employees", "disabled"]
+        : queryKeys.employees.byBusiness(businessId),
     queryFn: () =>
       empleadoService.getByBusiness(businessId as string | number),
     // Solo ejecutar si hay businessId

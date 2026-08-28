@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { empleadoService } from "@/services/empleado.service";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useGenerarCalendario = () => {
   const queryClient = useQueryClient();
@@ -21,15 +22,14 @@ export const useGenerarCalendario = () => {
       const businessKey = String(variables.businessId);
 
       queryClient.invalidateQueries({
-        queryKey: [
-          "employee-calendar-state",
+        queryKey: queryKeys.employees.calendarState(
           businessKey,
           variables.empleadoId,
-        ],
+        ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["employees", businessKey],
+        queryKey: queryKeys.employees.byBusiness(businessKey),
       });
     },
 

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { useFuncionesNegocio } from "@/features/membership/hooks/useMembershipQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 interface MembershipContextType {
   planActual: string | null;
@@ -41,7 +42,7 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (negocioId) {
       await queryClient.invalidateQueries({
-        queryKey: ["funciones-negocio", negocioId],
+        queryKey: queryKeys.membership.features(negocioId),
       });
     }
   }, [negocioId, queryClient]);
