@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { appointmentService } from "@/features/booking/services/appointment.service";
 import { queryKeys, type QueryEntityId } from "@/lib/query-keys";
 import type { ApiTurnoDisponibilidad } from "@/types/api";
@@ -35,5 +35,6 @@ export function useAppointmentAvailability(
     },
     enabled: params != null,
     staleTime: 0,
+    placeholderData: keepPreviousData,
   });
 }

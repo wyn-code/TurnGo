@@ -38,10 +38,7 @@ import { ApiError } from "@/lib/api-client";
 import { buildLocalDateTimeString } from "@/lib/datetime-utils";
 import { apiDayToWeekDayIndex, WEEK_DAYS } from "@/lib/schedule-utils";
 import { useAppointmentAvailability } from "@/features/booking/hooks/useAppointmentAvailability";
-import {
-  useCreateAppointment,
-  useUpsertClient,
-} from "@/features/booking/hooks/useBookingMutations";
+import { useCrearReserva } from "@/hooks/mutations/useCrearReserva";
 
 const STEPS = ["Servicio", "Fecha y horario", "Datos", "Completado"];
 
@@ -216,9 +213,8 @@ const Reservar = () => {
   }, [businessId, visibleMonth, booking.professionalId]);
   const dayAvailabilityQuery = useAppointmentAvailability(dayAvailabilityParams);
   const monthAvailabilityQuery = useAppointmentAvailability(monthAvailabilityParams);
-  const upsertClient = useUpsertClient();
-  const createAppointment = useCreateAppointment();
-  const isSubmitting = upsertClient.isPending || createAppointment.isPending;
+  const crearReserva = useCrearReserva();
+  const isSubmitting = crearReserva.isPending;
   const occupiedAppointments = dayAvailabilityQuery.data ?? EMPTY_AVAILABILITY;
   const isLoadingSlots = dayAvailabilityQuery.isLoading;
 
@@ -275,18 +271,19 @@ const Reservar = () => {
       if (!booking.client.firstName.trim() || !booking.client.lastName.trim() || !booking.client.phone.trim()) {
         setSubmitError("Faltan datos del cliente"); return;
       }
-      const cliente = await upsertClient.mutateAsync({
-        telefono: booking.client.phone.trim(),
-        nombre: booking.client.firstName.trim(),
-        apellido: booking.client.lastName.trim(),
-        email: booking.client.email.trim() || undefined,
-      });
-      const turno = await createAppointment.mutateAsync({
-        id_negocio: Number(business.id_negocio),
-        id_cliente: Number(cliente.id_cliente),
-        id_servicio: Number(booking.serviceId),
-        id_empleado: booking.professionalId ? Number(booking.professionalId) : null,
-        fecha_hora_inicio: buildLocalDateTimeString(booking.date, effectiveSelectedTime),
+      const turno = await crearReserva.mutateAsync({
+        client: {
+          telefono: booking.client.phone.trim(),
+          nombre: booking.client.firstName.trim(),
+          apellido: booking.client.lastName.trim(),
+          email: booking.client.email.trim() || undefined,
+        },
+        appointment: {
+          id_negocio: Number(business.id_negocio),
+          id_servicio: Number(booking.serviceId),
+          id_empleado: booking.professionalId ? Number(booking.professionalId) : null,
+          fecha_hora_inicio: buildLocalDateTimeString(booking.date, effectiveSelectedTime),
+        },
       });
       setCreatedTurnoId(turno.id_turno);
       setStep(4);
@@ -296,10 +293,6 @@ const Reservar = () => {
         if (err.status === 409) {
           setSubmitError("...");
           setBooking((c) => ({ ...c, timeSlot: "" }));
-          await Promise.all([
-            dayAvailabilityQuery.refetch(),
-            monthAvailabilityQuery.refetch(),
-          ]);
           setStep(2);
           return;
         }
