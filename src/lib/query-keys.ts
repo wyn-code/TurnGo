@@ -1,5 +1,5 @@
 /**
- * Query-key factory shared by every TanStack Query hook.
+ * Query-key factory shared by every TanStack Query.
  *
  * IDs are normalized to strings because route params and authenticated user IDs
  * reach the UI as strings while API payloads usually expose numbers. Keeping a
@@ -17,6 +17,7 @@ export const queryKeys = {
     admin: () => ["businesses", "admin"] as const,
     mine: (userId: QueryEntityId) => ["businesses", "mine", id(userId)] as const,
     bySlug: (slug: string) => ["businesses", "slug", slug] as const,
+    mapa: () => ["businesses", "map"] as const,
   },
   users: {
     admin: () => ["users", "admin"] as const,

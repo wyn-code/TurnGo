@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiClient from "@/lib/api-client";
+import { authService } from "@/features/auth/services/auth.service";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { useRef } from "react";
 
@@ -11,14 +11,11 @@ export default function VerifyEmailPage() {
 
   const { loginWithToken } = useAuth();
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [success, setSuccess] =
-    useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const [message, setMessage] =
-    useState("");
+  const [message, setMessage] = useState("");
 
 useEffect(() => {
   if (!token) return;
@@ -31,15 +28,8 @@ useEffect(() => {
 
   const verifyEmail = async () => {
     try {
-      const response = await apiClient.get<{
-        access_token: string;
-        token_type: string;
-      }>(
-        `/auth/verify-email/${token}`,
-      );
-      await loginWithToken(
-        response.access_token,
-      );
+      const response = await authService.verifyEmail(token) as { access_token: string };
+      await loginWithToken(response.access_token);
 
       setSuccess(true);
 

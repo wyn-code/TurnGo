@@ -1,18 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
-import { obtenerNegociosMapa } from "@/services/business.service";
-import type { NegocioMapa } from "@/types/api";
+import { useNegociosMapa } from "@/hooks/queries/useNegociosMapa";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function MapaPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
 
-  const [negocios, setNegocios] = useState<NegocioMapa[]>([]);
-
-  useEffect(() => {
-    obtenerNegociosMapa().then(setNegocios);
-  }, []);
+  const { data: negocios } = useNegociosMapa();
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -24,15 +19,13 @@ export default function MapaPage() {
       zoom: 12,
     });
 
-    negocios.forEach((negocio) => {
+    negocios?.forEach((negocio) => {
       if (negocio.latitud == null || negocio.longitud == null) return;
 
       new mapboxgl.Marker()
         .setLngLat([negocio.longitud, negocio.latitud])
         .setPopup(
-          new mapboxgl.Popup().setHTML(`
-      <h3>${negocio.nombre}</h3>
-    `),
+          new mapboxgl.Popup().setHTML(`<h3>${negocio.nombre}</h3>`),
         )
         .addTo(map);
     });
