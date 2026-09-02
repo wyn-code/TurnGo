@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle, Ban, UserX, CalendarX } from "lucide-react";
+import { Loader2, CheckCircle, Ban, UserX, CalendarX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useDashboardBusiness } from "@/features/dashboard/contexts/DashboardBusinessContext";
 import {
@@ -25,17 +25,25 @@ import { queryKeys } from "@/lib/query-keys";
 import { ApiError } from "@/lib/api-client";
 import type { ApiTurno } from "@/types/api";
 
+/**
+ * LIMITACIÓN CONOCIDA (QR Check-In sin sesión):
+ * Si el usuario escanea un código QR sin tener una sesión activa en el teléfono/dispositivo,
+ * `ProtectedRoute` redirigirá automáticamente a /login y el parámetro `?token=` se perderá.
+ * Flujo esperado: El dueño/administrador debe haber iniciado sesión previamente en el dispositivo.
+ */
+
 const ESTADO = {
   PENDIENTE: 1,
   CONFIRMADO: 2,
   COMPLETADO: 3,
   CANCELADO: 4,
   NO_ASISTIO: 5,
+  ASISTIO: 6,
 } as const;
 
 const TRANSICIONES_PERMITIDAS: Record<number, number[]> = {
   [ESTADO.PENDIENTE]: [ESTADO.CONFIRMADO, ESTADO.CANCELADO],
-  [ESTADO.CONFIRMADO]: [ESTADO.COMPLETADO, ESTADO.CANCELADO, ESTADO.NO_ASISTIO],
+  [ESTADO.CONFIRMADO]: [ESTADO.ASISTIO, ESTADO.COMPLETADO, ESTADO.CANCELADO, ESTADO.NO_ASISTIO],
 };
 
 const ACCIONES: Record<
@@ -47,10 +55,15 @@ const ACCIONES: Record<
     icon: <CheckCircle size={14} />,
     variant: "default",
   },
+  [ESTADO.ASISTIO]: {
+    label: "Marcar asistido",
+    icon: <UserCheck size={14} />,
+    variant: "default",
+  },
   [ESTADO.COMPLETADO]: {
     label: "Completar",
     icon: <CheckCircle size={14} />,
-    variant: "default",
+    variant: "outline",
   },
   [ESTADO.CANCELADO]: {
     label: "Cancelar",
@@ -158,6 +171,43 @@ const DashboardTurnos = () => {
     );
   };
 
+  const processedTokenRef = useRef<string | null>(null);
+
+  const { mutate: checkInQr } = useMutation({
+    mutationFn: appointmentService.qrCheckIn,
+    onSuccess: (turnoActualizado) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all() });
+      toast.success("Asistencia registrada con éxito");
+      
+      // Resaltar el turno en la lista
+      setSearchParams((prev) => {
+        prev.set("turno", turnoActualizado.id_turno.toString());
+        return prev;
+      });
+    },
+    onError: (error: unknown) => {
+      const detail = error instanceof ApiError ? error.detail : "Error al procesar el código QR";
+      toast.error(detail);
+    },
+  });
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+
+    if (token && processedTokenRef.current !== token) {
+      processedTokenRef.current = token;
+
+      // Limpiar ?token= de la URL de inmediato manteniendo el resto de params
+      setSearchParams((prev) => {
+        prev.delete("token");
+        return prev;
+      }, { replace: true });
+
+      // Disparar el check-in
+      checkInQr(token);
+    }
+  }, [searchParams, setSearchParams, checkInQr]);
+  
   useEffect(() => {
     if (highlightedId && sortedAppointments.length > 0) {
       const timer = setTimeout(() => {
@@ -175,7 +225,7 @@ const DashboardTurnos = () => {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [highlightedId]);
+  }, [highlightedId, searchParams, setSearchParams]);
 
   if (isLoadingBusiness || (businessId && isLoading)) {
     return (

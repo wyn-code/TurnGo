@@ -31,16 +31,7 @@ export const appointmentService = {
   }): Promise<ApiTurno[]> => {
     return apiClient.get<ApiTurno[]>("/turnos/por-rango", params);
   },
-
-  getDisponibilidad: async (params: {
-    id_negocio: string | number;
-    desde: string;
-    hasta: string;
-    id_empleado?: string | number;
-  }): Promise<ApiTurnoDisponibilidad[]> => {
-    return apiClient.get<ApiTurnoDisponibilidad[]>("/turnos/disponibilidad", params);
-  },
-
+  
   updateAppointment: async (
     id: string | number,
     data: Partial<CreateAppointmentRequest>
@@ -55,7 +46,23 @@ export const appointmentService = {
     return apiClient.put<ApiTurno>(`/turnos/${id}/estado`, data);
   },
 
+    qrCheckIn: async (token: string): Promise<ApiTurno> => {
+    return apiClient.request<ApiTurno>("/turnos/qr/check-in", { 
+      method: "POST", 
+      params: { token } 
+    });
+  },
+
   deleteAppointment: async (id: string | number): Promise<ApiTurno> => {
     return apiClient.delete<ApiTurno>(`/turnos/${id}`);
+  },
+  
+  getDisponibilidad: async (params: {
+    id_negocio: string | number;
+    desde: string;
+    hasta: string;
+    id_empleado?: string | number;
+  }): Promise<ApiTurnoDisponibilidad[]> => {
+    return apiClient.get<ApiTurnoDisponibilidad[]>("/turnos/disponibilidad", params);
   },
 };

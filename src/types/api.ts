@@ -137,6 +137,7 @@ export interface ApiTurno {
     nombre?: string;
     nombre_estado?: string;
   };
+  qr_token?: string | null;
 }
 
 export interface ApiTurnoDisponibilidad {

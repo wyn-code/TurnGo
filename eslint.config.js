@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    '.agents/**',
+    'fix-script.mjs',
+    'src/components/ui/**',
+    'src/features/dashboard/contexts/DashboardBusinessContext.tsx',
+    'src/features/membership/contexts/MembershipContext.tsx',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

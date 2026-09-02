@@ -24,6 +24,7 @@ interface BookingSummaryProps {
   businessName: string;
   confirmed?: boolean;
   turnoId?: number | null;
+  qrToken?: string | null;
 }
 
 const generateGoogleCalendarLink = (
@@ -89,6 +90,7 @@ const BookingSummary = ({
   businessName,
   confirmed,
   turnoId,
+  qrToken,
 }: BookingSummaryProps) => {
   const parsedDate = new Date(date);
 
@@ -150,6 +152,18 @@ const BookingSummary = ({
               Presentá este código al llegar
             </p>
           </div>
+        )}
+
+        {confirmed && qrToken && (
+        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-sm">
+          <QRCodeSVG 
+            value={`${window.location.origin}/dashboard/turnos?token=${qrToken}`}
+            size={180}
+          />
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Muestra este código QR al llegar para registrar tu asistencia.
+          </p>
+        </div>
         )}
 
         <div className="space-y-3 text-sm bg-muted/30 p-4 rounded-xl border border-border/50">

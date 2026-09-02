@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import type {
   BookingData,
+  ApiTurno,
   ApiTurnoDisponibilidad,
   ApiHorario,
 } from "@/types/api";
@@ -110,7 +111,6 @@ const generateTimeSlots = (
   return slots;
 };
 
-
 const Reservar = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -152,33 +152,33 @@ const Reservar = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
-  const [createdTurnoId, setCreatedTurnoId] = useState<number | null>(null);
+  const [createdTurno, setCreatedTurno] = useState<ApiTurno | null>(null);
 
   const getBusinessHoursForDate = useCallback(
-  (b: typeof business, date: Date | null) => {
-    if (!b || !date || !b.horarios) return undefined;
+    (b: typeof business, date: Date | null) => {
+      if (!b || !date || !b.horarios) return undefined;
 
-    const jsDay = date.getDay();
-    const apiDay = jsDay === 0 ? 6 : jsDay - 1;
+      const jsDay = date.getDay();
+      const apiDay = jsDay === 0 ? 6 : jsDay - 1;
 
-    const matching = b.horarios
-      .filter((x: ApiHorario) => {
-        const dayIndex = apiDayToWeekDayIndex(x.dia_semana);
-        return dayIndex === apiDay;
-      })
-      .sort((a: ApiHorario, b: ApiHorario) =>
-        a.hora_apertura.localeCompare(b.hora_apertura),
-      );
+      const matching = b.horarios
+        .filter((x: ApiHorario) => {
+          const dayIndex = apiDayToWeekDayIndex(x.dia_semana);
+          return dayIndex === apiDay;
+        })
+        .sort((a: ApiHorario, b: ApiHorario) =>
+          a.hora_apertura.localeCompare(b.hora_apertura),
+        );
 
-    if (matching.length === 0) return undefined;
+      if (matching.length === 0) return undefined;
 
-    return matching.map((h: ApiHorario) => ({
-      start: h.hora_apertura,
-      end: h.hora_cierre,
-    }));
-  },
-  []
-);
+      return matching.map((h: ApiHorario) => ({
+        start: h.hora_apertura,
+        end: h.hora_cierre,
+      }));
+    },
+    [],
+  );
 
   const selectedService = services.find(
     (s) => String(s.id_servicio) === String(booking.serviceId),
@@ -199,6 +199,7 @@ const Reservar = () => {
       employeeId: booking.professionalId || null,
     };
   }, [businessId, booking.date, booking.professionalId]);
+
   const monthAvailabilityParams = useMemo(() => {
     if (businessId == null) return null;
 
@@ -211,6 +212,7 @@ const Reservar = () => {
       employeeId: booking.professionalId || null,
     };
   }, [businessId, visibleMonth, booking.professionalId]);
+
   const dayAvailabilityQuery = useAppointmentAvailability(dayAvailabilityParams);
   const monthAvailabilityQuery = useAppointmentAvailability(monthAvailabilityParams);
   const crearReserva = useCrearReserva();
@@ -251,7 +253,6 @@ const Reservar = () => {
   );
   const availableSlots = timeSlots.filter((s) => s.available);
   const effectiveSelectedTime = booking.timeSlot;
-  
 
   const canNext = (): boolean => {
     switch (step) {
@@ -285,13 +286,13 @@ const Reservar = () => {
           fecha_hora_inicio: buildLocalDateTimeString(booking.date, effectiveSelectedTime),
         },
       });
-      setCreatedTurnoId(turno.id_turno);
+      setCreatedTurno(turno);
       setStep(4);
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof ApiError) {
         if (err.status === 409) {
-          setSubmitError("...");
+          setSubmitError("El horario seleccionado ya no está disponible. Por favor, elegí otro.");
           setBooking((c) => ({ ...c, timeSlot: "" }));
           setStep(2);
           return;
@@ -349,10 +350,10 @@ const Reservar = () => {
               date={booking.date}
               time={effectiveSelectedTime}
               client={booking.client}
-              turnoId={createdTurnoId}
+              qrToken={createdTurno?.qr_token}
             />
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild variant="outline"><Link to={`/negocio/${slug}`}>Volver al negocio</Link></Button>
+              <Button asChild variant="outline"><Link to={`/${slug}`}>Volver al negocio</Link></Button>
               <Button asChild><Link to="/">Ir al inicio</Link></Button>
             </div>
           </div>
@@ -366,11 +367,11 @@ const Reservar = () => {
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
         {/* Breadcrumb */}
         <Link
-        to={`/${slug}`}
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          to={`/${slug}`}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
-        <ArrowLeft className="h-4 w-4" />
-        {business.nombre}
+          <ArrowLeft className="h-4 w-4" />
+          {business.nombre}
         </Link>
 
         {/* Header */}
@@ -617,7 +618,7 @@ const Reservar = () => {
                   <h2 className="text-xl font-semibold">Tus datos</h2>
                 </div>
                 <BookingForm
-                  data={ booking.client }
+                  data={booking.client}
                   onChange={(client) => setBooking((c) => ({ ...c, client }))}
                 />
               </div>
@@ -650,9 +651,10 @@ const Reservar = () => {
               Continuar
             </Button>
           )}
+
           {step === 3 && (
-            <>
-              <p className="text-sm text-muted-foreground text-center mb-4">
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-xs text-muted-foreground text-right max-w-xs">
                 Una vez confirmada la reserva recibirás un correo electrónico con un código QR y todos los datos de tu turno.
               </p>
               <Button disabled={!canNext() || isSubmitting} onClick={handleConfirm}>
@@ -665,7 +667,7 @@ const Reservar = () => {
                   "Confirmar reserva"
                 )}
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
